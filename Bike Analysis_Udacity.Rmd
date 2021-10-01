@@ -1,0 +1,307 @@
+---
+title: "Bike Share Analysis Udacity Project 2"
+author: "Emmanuel Teikutey"
+date: "9/29/2021"
+output: pdf_document
+---
+
+# INTRODUCTION - BIKE SHARE DATA
+
+Over the past decade, bicycle-sharing systems have been growing in number and popularity in cities across the world. Bicycle-sharing systems allow users to rent bicycles on a very short-term basis for a price. This allows people to borrow a bike from point A and return it at point B, though they can also return it to the same location if they'd like to just go for a ride. Regardless, each bike can serve several users per day.
+
+Thanks to the rise in information technologies, it is easy for a user of the system to access a dock within the system to unlock or return bicycles. These technologies also provide a wealth of data that can be used to explore how these bike-sharing systems are used.
+
+#PROJECT OVERVIEW
+
+In this project, I will make use of R to explore and visualise data related to bike share systems for three major cities in the United States—Chicago, New York City, and Washington. I will write code to import the data and answer interesting questions about it by computing descriptive statistics and making visualizations!
+
+## Major Questions to Answer
+
+There are a number of different areas of interest to explore in the data set but for the purpose of this Project I will be focusing on the following questions:
+1. The most common month of travel in the cities
+2. The most common Start Station in the cities
+3. Total travel time of users in the different cities.
+
+# THE DATA SET
+
+Randomly selected data for the first six months of 2017 are provided for all three cities.
+
+Before I start answering the questions, let check the nature of the data set involved.
+
+
+```{r cities}
+ny = read.csv('new-york-city.csv')
+wash = read.csv('washington.csv')
+chi = read.csv('chicago.csv')
+```
+```{r}
+head(ny)
+```
+
+```{r}
+head(wash)
+```
+```{r}
+head(chi)
+```
+```{r}
+dim(ny)
+```
+```{r}
+dim(wash)
+```
+```{r}
+dim(chi)
+```
+All three of the data files contain 300000 rows and 10 columns for Chicago and NewYork whiles Washington has 8 columns. But all data files have same core six (6) columns:
+
+Start Time (e.g., 2017-01-01 00:07:57)
+End Time (e.g., 2017-01-01 00:20:53)
+Trip Duration (in seconds - e.g., 776)
+Start Station (e.g., Broadway & Barry Ave)
+End Station (e.g., Sedgwick St & North Ave)
+User Type (Subscriber or Customer)
+
+The Chicago and New York City files also have the following two columns:
+
+Gender
+Birth Year
+
+# DATA ANALYSIS/ ANSWER TO QUESTIONS
+
+## QUESTION ONE: The most common month of travel in the cities
+
+The date and time is grouped in the datetime. The montths are also numerically labelled and I have relabel them characteristically. I need to extract the month from the date time and to do this I need to use the lubrdate function which provides tools that make it easier to parse and manipulate dates.
+
+```{r}
+library(lubridate)
+
+month <- function(city) {
+  start_date <-
+    sapply(strsplit(as.character(city$Start.Time), " "), "[", 1)
+  # extract month from the datatime
+  month <- substr(x = start_date, 6, 7)
+}
+# Call the month function to Chicago
+month_chi <- month(chi)
+# set a new column with the month data
+chi['month'] <- month_chi
+# list the month column to check when needed
+#chi['month']
+
+# Call the month function to New York when needed
+month_ny <- month(ny)
+ny['month'] <- month_ny
+#ny['month']
+
+# Call the month function to Washington when needed
+month_wash <- month(wash)
+wash['month'] <- month_wash
+#wash['month']
+
+
+# replacing '01' with 'january' and '02' with 'February' and so on ...
+old <- c('01', '02', '03', '04', '05', '06')
+new <- c('January', 'Febraury', 'March', 'April', 'May', 'June')
+chi$month[chi$month %in% old] <-
+  new[match(chi$month, old, nomatch = 0)]
+ny$month[ny$month %in% old] <-
+  new[match(ny$month, old, nomatch = 0)]
+wash$month[wash$month %in% old] <-
+  new[match(wash$month, old, nomatch = 0)]
+
+# find the unique values of months
+# check the list when needed
+#chi['month']
+uniqv_chi <- unique(chi$month)
+#ny['month']
+uniqv_ny <- unique(ny$month)
+#wash['month']
+uniqv_wash <- unique(wash$month)
+
+# check the list when needed
+#uniqv_chi
+#uniqv_ny
+#uniqv_wash
+
+# find the mode of the month
+common_month <- function(data_column,uniqv) {
+  uniqv[which.max(tabulate(match(data_column, uniqv)))]   
+}
+
+# call the most common month function to Chicago
+common_m_chi <- common_month(chi$month,uniqv_chi)
+cat('The most common month for Chicago is:', common_m_chi,'\n')
+
+```
+```{r}
+# call the most common month function to New York
+common_m_ny <- common_month(ny$month,uniqv_ny)
+cat('The most common month for New York is:', common_m_ny,'\n')
+```
+```{r}
+# call the most common month function to Washington
+common_m_wash <- common_month(wash$month,uniqv_wash)
+cat('The most common month for Washington is:', common_m_wash)
+```
+ In all cases/ cities, it is evidently clear that June is the most common month.
+ 
+ 
+## Visualisation: The most common of month in the cities
+
+For visualization I chose to use ggplot2 function to create my graphs.
+
+```{r, echo=FALSE}
+chi$month <- factor(chi$month,levels = c('January', 'Febraury', 'March', 'April', 'May', 'June'))
+ggplot(aes(chi$month),data=chi)+
+  geom_bar(color='black',fill='#099DD9')+
+  labs(x='Months',y='Counts for each month',title='Usage of Each Month in Chicago')
+```
+
+```{r}
+ny$month <- factor(ny$month,levels = c('January', 'Febraury', 'March', 'April', 'May', 'June'))
+ggplot(aes(ny$month),data=ny)+
+  geom_bar(color='black',fill= 'red')+
+  labs(x='Months',y='Counts for each month',title='Usage of Each Month in New York')
+```
+```{r}
+wash$month <- factor(wash$month,levels = c('January', 'Febraury', 'March', 'April', 'May', 'June'))
+ggplot(aes(wash$month),data=wash)+
+  geom_bar(color='black',fill='green')+
+  labs(x='Months',y='Counts for each month',title='Usage of Each Month in Washington')+
+  scale_x_discrete(limits= c('January', 'Febraury', 'March', 'April', 'May', 'June'))
+```
+### Numeric Summary
+```{r}
+summary(chi$month)
+```
+Numeric summary for Chicago
+
+```{r}
+summary(ny$month)
+```
+Numeric summary for New York
+```{r}
+summary(wash$month)
+```
+Numeric summary for Washington
+I all cases it is evidently clear the June was the most common Month
+
+## QUESTION 2: What is the Most Common Start Station?
+
+To answer this question, I need to assign unique values and find the mode for the various start stations in the cites.
+```{r}
+uniqv_ss_chi <- unique(chi$Start.Station)
+uniqv_ss_ny <- unique(ny$Start.Station)
+uniqv_ss_wash <- unique(wash$Start.Station)
+```
+```{r}
+common_ss <- function(data_column,uniqv_ss) {
+  uniqv_ss[which.max(tabulate(match(data_column, uniqv_ss)))]   
+}
+```
+
+Call the most common month function to Chicago
+```{r}
+common_ss_chi <- common_ss(chi$Start.Station,uniqv_ss_chi)
+print('The most common start station for Chicago is:') 
+common_ss_chi
+```
+Call the most common month function to New York
+```{r}
+common_ss_ny <- common_ss(ny$Start.Station,uniqv_ss_ny)
+print('The most common start station for New York is:') 
+common_ss_ny
+```
+Call the most common month function to Washington
+```{r}
+common_ss_wash <- common_ss(wash$Start.Station,uniqv_ss_wash)
+print('The most common start station for Washington is:') 
+common_ss_wash
+```
+## VISUALISATION: Most Common Start Station
+Plot for Chicago
+```{r}
+library(ggplot2)
+library(scales)
+
+ggplot(aes(chi$Start.Station),data=chi)+
+  geom_bar(color='black',fill='#099DD9')+
+  labs(x='Stations',y='Counts for each station',title='All Starting Stations in Chicago')
+```
+Plot for New York
+```{r}
+ggplot(aes(ny$Start.Station),data=ny)+
+  geom_bar(color='black',fill='#099DD9')+
+  labs(x='Stations',y='Counts for each station',title='Starting Stations in New York')
+```
+Plot for Washington
+```{r}
+ggplot(aes(wash$Start.Station),data=wash)+
+  geom_bar(color='black',fill='#099DD9')+
+  labs(x='Stations',y='Counts for each station',title='Starting Stations in Washington')
+```
+
+## QUESTION 3: What is the average travel time for users in different cities?
+
+To get the average travel time for users, I run the mean function on the Trip duration column for the different cities.
+
+```{r}
+duration_chi = mean(chi$Trip.Duration)
+duration_ny = mean(ny$Trip.Duration)
+duration_wash = mean(wash$Trip.Duration)
+```
+
+Average time travel for Chicago
+```{r}
+cat('The average travel time for Chicago is:', duration_chi,'\n')
+```
+Average time travel for New York
+```{r}
+cat('The average travel time for New York is:', duration_ny,'\n')
+```
+
+Average time travel for New York
+```{r}
+cat('The average travel time for Washington is:', duration_wash,'\n')
+```
+## VISUALISATION: Average time travel for cities
+
+Plot for Chicago
+```{r}
+ggplot(aes(x=Trip.Duration),data=chi)+
+  geom_histogram(binwidth = 100)+
+  ggtitle('The Bar Plot of Average Travel Time of Chicago')+
+  scale_x_continuous(limits = c(0,5000))+
+  labs(x='Usages',y='Travel Time')+
+  geom_hline(aes(yintercept = mean(Trip.Duration)),col='red',size=1)
+```
+
+Plot for New York
+```{r}
+ggplot(aes(x=Trip.Duration),data=ny)+
+  geom_histogram(binwidth = 100)+
+  ggtitle('The Bar Plot of Average Travel Time of New York')+
+  scale_x_continuous(limits = c(0,5000))+
+  labs(x='Usages',y='Travel Time')+
+  geom_hline(aes(yintercept = mean(Trip.Duration)),col='red',size=1)
+```
+
+Plot for Washington
+```{r}
+ggplot(aes(x=Trip.Duration),data=ny)+
+  geom_histogram(binwidth = 100)+
+  ggtitle('The Bar Plot of Average Travel Time of Washington')+
+  scale_x_continuous(limits = c(0,5000))+
+  labs(x='Usages',y='Travel Time')+
+  geom_hline(aes(yintercept = mean(Trip.Duration)),col='red',size=1)
+```
+
+#OBESERVATIONS
+- June is the most common months amongst the months under consideration
+- The city with the highest travel time is New york
+- The most common start station for Chicago is Street Dr & Grand Av, the one for New York is Perching Square North and Washington is Columbus Circle/ Union Station
+
+# RECOMMENDATIONS
+- More promotional activities should be carried out in other months other than June 
+- Offer discounted pricing in areas with low patronage
